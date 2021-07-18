@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainGrid from '../src/components/MainGrid';
 import Box from '../src/components/Box';
 import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
@@ -19,8 +19,31 @@ function ProfileSidebar(props) {
     </Box>
   )
 }
+
+function ProfileRelationsBox(props) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {props.title} ({props.items.length})
+      </h2>
+      <ul>
+        {/* {following.map((followed) => {
+          return (
+            <li key={followed}>
+              <a href={`/users/${followed}`} key={followed}>
+                <img src={`https://github.com/${followed}.png`}/>
+                <span>{followed}</span>
+              </a>
+            </li>
+          )
+        })} */}
+      </ul>
+    </ProfileRelationsBoxWrapper>
+  )
+}
+
 export default function Home() {
-  const githubUser = 'maranacaon'
+  const randomUser = 'maranacaon'
   const favPeople = [
     'juunegreiros', 
     'omariosouto',
@@ -29,6 +52,23 @@ export default function Home() {
     'marcobrunodev',
     'felipefialho',
   ]
+
+  const [following, setFollowing] = useState(['']);
+
+  // 0 - pegar o array de dados do github
+  useEffect(() => {
+    fetch('https://api.github.com/users/maranacaon/following')
+    .then(function (serverResponse) {
+      return serverResponse.json();
+    })
+    .then( function (completeResponse) {
+      setFollowing(completeResponse)
+    })
+  }, [])
+
+  // 1 - criar um box que vai ter um map baseado nos items do array que pegamos do github
+
+
   const [communities, setCommunities] = useState([{
     id: new Date().toISOString(), 
     title: 'Amo meu gato',
@@ -53,10 +93,13 @@ export default function Home() {
   return (
     <>
       <AlurakutMenu />
+
       <MainGrid>
+
         <div className="profileArea" style={{gridArea: 'profileArea'}}>
-          <ProfileSidebar githubUser={githubUser} />
+          <ProfileSidebar githubUser={randomUser} />
         </div>
+
         <div className="welcomeArea" style={{gridArea: 'welcomeArea'}}>
           <Box>
             <h1 className="title">
@@ -91,7 +134,9 @@ export default function Home() {
             </form>
           </Box>
         </div>
+
         <div className="profileRelationsArea" style={{gridArea: 'profileRelationsArea'}}>
+          <ProfileRelationsBox title="Seguindo" items={following}/>
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">
               Pessoas da comunidade ({favPeople.length})
@@ -109,6 +154,7 @@ export default function Home() {
               })}
             </ul>
           </ProfileRelationsBoxWrapper>
+
           <ProfileRelationsBoxWrapper>
               <h2 className="smallTitle">
                 Comunidades ({communities.length})
@@ -127,6 +173,7 @@ export default function Home() {
               </ul>
             </ProfileRelationsBoxWrapper>
         </div>
+
       </MainGrid>
     </>
   )

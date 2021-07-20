@@ -43,7 +43,9 @@ function ProfileRelationsBox(props) {
 }
 
 export default function Home() {
-  const randomUser = 'maranacaon'
+  const [following, setFollowing] = useState([]);
+  const [communities, setCommunities] = useState([]);
+  const randomUser = 'maranacaon';
   const favPeople = [
     'juunegreiros', 
     'omariosouto',
@@ -52,10 +54,9 @@ export default function Home() {
     'marcobrunodev',
     'felipefialho',
   ]
+  
+  const token = ''
 
-  const [following, setFollowing] = useState(['']);
-
-  // 0 - pegar o array de dados do github
   useEffect(() => {
     fetch('https://api.github.com/users/maranacaon/following')
     .then(function (serverResponse) {
@@ -64,30 +65,60 @@ export default function Home() {
     .then( function (completeResponse) {
       setFollowing(completeResponse)
     })
+
+    fetch(
+      'https://graphql.datocms.com/', 
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'e45b65c85ef83f75d922529d60262d',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({"query": `query {
+          allCommunities {
+            id
+            title
+            imageUrl
+            creatorSlug
+          }
+        }`})
+      })
+      .then((res) => res.json())
+      .then((res) => {
+        const datoCommunities = res.data.allCommunities
+        setCommunities(datoCommunities)
+      })
+      .catch((error) => {
+        console.log(error);
+      })
   }, [])
 
-  // 1 - criar um box que vai ter um map baseado nos items do array que pegamos do github
-
-
-  const [communities, setCommunities] = useState([{
-    id: new Date().toISOString(), 
-    title: 'Amo meu gato',
-    image: 'https://i.pinimg.com/564x/2d/86/d2/2d86d23546e43a97cf1ca307ef42a8a9.jpg',
-  }])
 
   function handleCreateCommunity(e) {
     e.preventDefault();
     const dataForm = new FormData(e.target)
 
     const community = {
-      id: new Date().toISOString(),
       title: dataForm.get('title'),
-      image: dataForm.get('image'),
+      imageUrl: dataForm.get('image'),
+      creatorSlug: randomUser,
     }
 
-    const newCommuties = [...communities, community]
-    setCommunities(newCommuties)
-    console.log(communities)
+    fetch('/api/communities', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(community)
+    })
+    .then(async (response) => {
+      const data = await response.json();
+      console.log(data.record);
+      const community = data.record;
+      const newCommuties = [...communities, community]
+      setCommunities(newCommuties)
+    })
   }
 
   return (
@@ -163,8 +194,8 @@ export default function Home() {
                 {communities.map((community) => {
                   return (
                     <li key={community.id}>
-                      <a href={`/users/${community.title}`} key={community.title}>
-                        <img src={community.image}/>
+                      <a href={`/comunidades/${community.id}`} key={community.id}>
+                        <img src={community.imageUrl}/>
                         <span>{community.title}</span>
                       </a>
                     </li>
